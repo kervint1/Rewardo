@@ -39,7 +39,7 @@ curl https://cashyape-api-<hash>.herokuapp.com/health
 
 - `server/Procfile` が `uvicorn main:app --port $PORT` を起動する
 - Pythonバージョンは `server/.python-version`（3.12）で指定
-- テーブルは起動時の `create_all` で自動作成される（Alembic導入後はリリースフェーズで `alembic upgrade head` に置き換え）
+- マイグレーションはProcfileの `release: alembic upgrade head` によりデプロイごとに自動適用される
 
 ### 2回目以降のデプロイ
 

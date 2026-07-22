@@ -78,7 +78,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
   db:
     image: postgres:16-alpine
@@ -150,9 +150,20 @@ MONLIX_POSTBACK_SECRET=
 
 `.env` は gitignore し、`.env.example` をコミットする。`DATABASE_URL` はcompose内で固定しているため `.env` に書く必要はない（本番はHerokuが自動設定）。
 
-## テーブルの初期化
+## テーブルの初期化・マイグレーション（Alembic）
 
-FastAPIの起動時に `SQLModel.metadata.create_all` でテーブルを自動作成する（`database.py` の `init_db`）。手動でDDLを流す必要はない。実装が進んだらAlembicマイグレーションに置き換える。
+テーブルの作成・変更は**Alembic**（`server/alembic/`）で管理する。composeの`server`は起動前に `alembic upgrade head` を自動実行するため、`docker compose up` すれば常に最新スキーマになる。
+
+スキーマを変更するときの手順:
+
+```bash
+# 1. server/models/ のSQLModelを編集
+# 2. マイグレーションを自動生成
+docker compose exec server alembic revision --autogenerate -m "add xxx column"
+# 3. 生成された server/alembic/versions/*.py を目視確認
+# 4. 適用（再起動でも可）
+docker compose exec server alembic upgrade head
+```
 
 ## 日常の開発フロー
 

@@ -83,7 +83,7 @@ CREATE TABLE withdrawals (
 );
 ```
 
-マイグレーションはFarmMatchと同じく**Alembic**で管理する（MVP初期は手動DDLでも可）。
+マイグレーションはFarmMatchと同じく**Alembic**で管理する（導入済み: `server/alembic/`）。スキーマの正はSQLModelモデル＋マイグレーションであり、上記DDLは参考情報。
 
 ## usersの行作成（プロビジョニング）
 
