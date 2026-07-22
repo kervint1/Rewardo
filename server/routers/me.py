@@ -15,6 +15,7 @@ def get_me(user: User = Depends(get_current_user)):
         email=user.email,
         name=user.name,
         avatar_url=user.avatar_url,
-        balance=user.balance,
-        min_withdrawal_amount=config.MIN_WITHDRAWAL_AMOUNT,
+        points=user.points,
+        min_withdrawal_points=config.MIN_WITHDRAWAL_POINTS,
+        points_per_sol=config.POINTS_PER_SOL,
     )

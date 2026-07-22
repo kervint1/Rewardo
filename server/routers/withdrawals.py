@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
@@ -36,8 +37,11 @@ def create_withdrawal(
 ):
     if not YAPE_PHONE_PATTERN.match(body.yape_phone):
         raise ApiError(422, "INVALID_PHONE", "Número de Yape inválido (9 dígitos, empieza con 9)")
-    if body.amount < config.MIN_WITHDRAWAL_AMOUNT:
-        raise ApiError(422, "BELOW_MINIMUM", f"El monto mínimo es S/ {config.MIN_WITHDRAWAL_AMOUNT}")
+    if body.points < config.MIN_WITHDRAWAL_POINTS:
+        raise ApiError(422, "BELOW_MINIMUM", f"El mínimo es {config.MIN_WITHDRAWAL_POINTS:,} pts")
+    if body.points % config.POINTS_PER_SOL != 0:
+        # 端数ソルを発生させないため、1ソル単位でのみ換金を受け付ける
+        raise ApiError(422, "INVALID_AMOUNT", f"Debe ser múltiplo de {config.POINTS_PER_SOL:,} pts")
 
     # 行ロックで並行申請を防ぐ
     locked_user = session.exec(
@@ -52,12 +56,15 @@ def create_withdrawal(
     if pending is not None:
         raise ApiError(409, "WITHDRAWAL_ALREADY_PENDING", "Ya tienes una solicitud en proceso")
 
-    if body.amount > locked_user.balance:
-        raise ApiError(422, "INSUFFICIENT_BALANCE", "Saldo insuficiente")
+    if body.points > locked_user.points:
+        raise ApiError(422, "INSUFFICIENT_POINTS", "Puntos insuficientes")
 
-    locked_user.balance -= body.amount
+    locked_user.points -= body.points
     withdrawal = Withdrawal(
-        user_id=user.id, yape_phone=body.yape_phone, amount=body.amount
+        user_id=user.id,
+        yape_phone=body.yape_phone,
+        points=body.points,
+        amount_soles=Decimal(body.points // config.POINTS_PER_SOL),
     )
     session.add(withdrawal)
     session.commit()

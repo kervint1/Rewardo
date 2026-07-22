@@ -1,5 +1,4 @@
 import os
-from decimal import Decimal
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/cashyape"
@@ -15,6 +14,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1008
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
 MONLIX_POSTBACK_SECRET = os.getenv("MONLIX_POSTBACK_SECRET", "")
-MIN_WITHDRAWAL_AMOUNT = Decimal(os.getenv("MIN_WITHDRAWAL_AMOUNT", "10.00"))
+
+# ポイント制: 現金額を直接持たず整数ポイントで管理する（規約対応）
+POINTS_PER_SOL = int(os.getenv("POINTS_PER_SOL", "1000"))          # 1,000 pts = S/ 1
+MIN_WITHDRAWAL_POINTS = int(os.getenv("MIN_WITHDRAWAL_POINTS", "10000"))  # = S/ 10
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")

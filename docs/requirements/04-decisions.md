@@ -1,6 +1,22 @@
 # 決定事項ログ
 
-## 2026-07-22 改訂2: 認証をNextAuth.js + 自前JWTに変更（最終）
+## 2026-07-23: 現金表記をやめ、ポイント制に変更
+
+| 項目 | 決定内容 |
+| --- | --- |
+| 残高の持ち方 | `users.balance`（DECIMAL, S/) → `users.points`（INT）に変更 |
+| 報酬履歴 | `postbacks.reward_amount` → `reward_points`（INT、Monlixの仮想通貨単位） |
+| 換金申請 | `withdrawals` は消費ポイント（`points`）とYape送金額（`amount_soles`）の両方を記録 |
+| 換金レート | アプリ側で設定: `POINTS_PER_SOL=1000`（1,000 pts = S/ 1）。1,000 pts単位でのみ換金可 |
+| 最低換金 | `MIN_WITHDRAWAL_POINTS=10000`（= S/ 10） |
+| Monlix側設定 | ダッシュボードのVirtual Currency設定でCurrency Name（例: Coins）とExchange Rate（例: 1 USD = 1,000 Coins）を設定し、iframe内をポイント表示にする |
+
+### 理由
+
+- 現金額を直接表示・保持することが規約上問題になるため（ポイントサイトの一般的な構成でもある）
+- 副次効果として、整数ポイント化により浮動小数点・DECIMALの計算ズレの懸念がなくなる
+
+## 2026-07-22 改訂2: 認証をNextAuth.js + 自前JWTに変更
 
 | 項目 | 決定内容 |
 | --- | --- |

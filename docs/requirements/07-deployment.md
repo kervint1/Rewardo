@@ -26,7 +26,8 @@ heroku config:set -a cashyape-api \
   SECRET_KEY=$(openssl rand -hex 32) \
   ACCESS_TOKEN_EXPIRE_MINUTES=10080 \
   GOOGLE_CLIENT_ID=<GoogleのクライアントID> \
-  MIN_WITHDRAWAL_AMOUNT=10.00 \
+  POINTS_PER_SOL=1000 \
+  MIN_WITHDRAWAL_POINTS=10000 \
   FRONTEND_ORIGIN=https://<vercelのドメイン>
 # MONLIX_POSTBACK_SECRET はMonlix契約後に設定
 
@@ -69,7 +70,7 @@ git subtree push --prefix server heroku main
 
 - [ ] Google Cloud Console → OAuthクライアント → 承認済みリダイレクトURIに `https://<vercelのドメイン>/api/auth/callback/google` を追加
 - [ ] Herokuの `FRONTEND_ORIGIN` をVercelの本番ドメインに更新（CORS用）
-- [ ] 動作確認: 本番URLでGoogleログイン → /home表示 → /walletで残高0表示
+- [ ] 動作確認: 本番URLでGoogleログイン → /home表示 → /walletでポイント0表示
 - [ ] 管理者運用: TablePlus等で `heroku config:get DATABASE_URL -a cashyape-api` の接続文字列を使ってHeroku Postgresに接続
 
 ## 4. Monlix接続時（契約後）

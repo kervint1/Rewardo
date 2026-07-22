@@ -7,13 +7,14 @@ from pydantic import BaseModel
 
 class WithdrawalCreate(BaseModel):
     yape_phone: str
-    amount: Decimal
+    points: int
 
 
 class WithdrawalRead(BaseModel):
     id: uuid.UUID
     yape_phone: str
-    amount: Decimal
+    points: int
+    amount_soles: Decimal
     status: str
     created_at: datetime
 

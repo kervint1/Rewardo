@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 import logging
-from decimal import Decimal, InvalidOperation
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
@@ -45,8 +44,11 @@ def monlix_postback(
         return "OK"
 
     try:
-        reward = Decimal(amount)
-    except InvalidOperation:
+        # Monlixの仮想通貨（Coins/Points）は整数で届く
+        reward_points = int(amount)
+    except ValueError:
+        raise ApiError(422, "INVALID_AMOUNT", "Invalid amount")
+    if reward_points <= 0:
         raise ApiError(422, "INVALID_AMOUNT", "Invalid amount")
 
     user = session.exec(
@@ -56,8 +58,8 @@ def monlix_postback(
         logger.warning("Postback for unknown user: userid=%s", userid)
         raise ApiError(404, "USER_NOT_FOUND", "User not found")
 
-    session.add(Postback(transaction_id=transaction_id, user_id=user.id, reward_amount=reward))
-    user.balance += reward
+    session.add(Postback(transaction_id=transaction_id, user_id=user.id, reward_points=reward_points))
+    user.points += reward_points
     try:
         session.commit()
     except IntegrityError:

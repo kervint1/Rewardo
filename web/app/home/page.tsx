@@ -8,9 +8,9 @@ const MONLIX_IFRAME_URL = process.env.NEXT_PUBLIC_MONLIX_IFRAME_URL;
 export default function HomePage() {
   const { me } = useMe();
 
-  const balance = me?.balance ?? 0;
-  const min = me?.min_withdrawal_amount ?? 10;
-  const progress = Math.min((balance / min) * 100, 100);
+  const points = me?.points ?? 0;
+  const minPoints = me?.min_withdrawal_points ?? 10000;
+  const progress = Math.min((points / minPoints) * 100, 100);
 
   return (
     <div className="min-h-screen pb-16 flex flex-col">
@@ -18,10 +18,10 @@ export default function HomePage() {
         <div className="mx-auto max-w-md">
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-extrabold">
-              S/ {balance.toFixed(2)}
+              {points.toLocaleString("es-PE")} pts
             </span>
             <span className="text-sm text-gray-500">
-              Mínimo para retirar: S/ {min.toFixed(2)}
+              Mínimo para retirar: {minPoints.toLocaleString("es-PE")} pts
             </span>
           </div>
           <div className="mt-2 h-2 rounded-full bg-gray-100">

@@ -2,11 +2,13 @@
 
 Monlix iframeにタスク一覧・タスク詳細・外部サイト誘導・成果判定を任せるため、自アプリ側でタスク（案件）テーブルは持たない。管理するのは以下の3テーブルのみ。DBは**Heroku Postgres**。
 
+現金額は保持せず、**整数ポイント**で管理する（1,000 pts = S/ 1。規約対応、[04-decisions.md](./04-decisions.md)参照）。
+
 | テーブル | 役割 | 主な利用画面・処理 |
 | --- | --- | --- |
-| `users` | ユーザー情報と現在残高を管理する | Home / Wallet |
-| `postbacks` | Monlixから届いた成果発生履歴を保存する（`transaction_id` で二重付与を防止） | Webhook / Wallet履歴 |
-| `withdrawals` | Yape換金申請と送金ステータス（pending/completed/rejected）を管理する | Wallet / DBクライアント（管理者） |
+| `users` | ユーザー情報と所持ポイントを管理する | Home / Wallet |
+| `postbacks` | Monlixから届いた成果発生履歴（獲得ポイント数）を保存する（`transaction_id` で二重付与を防止） | Webhook / Wallet履歴 |
+| `withdrawals` | Yape換金申請（消費ポイント＋支払ソル額）と送金ステータス（pending/completed/rejected）を管理する | Wallet / DBクライアント（管理者） |
 
 ## ER図
 
@@ -24,7 +26,7 @@ erDiagram
         text email UK
         text name
         text avatar_url
-        decimal balance
+        int points "所持ポイント"
         timestamptz created_at
     }
 
@@ -32,7 +34,7 @@ erDiagram
         uuid id PK
         text transaction_id UK
         int user_id FK
-        decimal reward_amount
+        int reward_points "獲得ポイント"
         timestamptz created_at
     }
 
@@ -40,7 +42,8 @@ erDiagram
         uuid id PK
         int user_id FK
         varchar yape_phone
-        decimal amount
+        int points "消費ポイント"
+        decimal amount_soles "Yape送金額"
         text status
         timestamptz created_at
         timestamptz updated_at
@@ -49,7 +52,7 @@ erDiagram
 
 ## DDL（Heroku Postgres）
 
-金額の計算ズレを防ぐため、金額カラムには `DECIMAL(10, 2)` を使う。フロントエンドはDBに直接アクセスしないため、RLSは不要（アクセス制御はFastAPI側で行う）。
+ポイントは整数（INT）で持つため計算ズレは発生しない。Yape送金額のみ `DECIMAL(10, 2)` を使う。フロントエンドはDBに直接アクセスしないため、RLSは不要（アクセス制御はFastAPI側で行う）。
 
 ```sql
 CREATE TABLE users (
@@ -58,7 +61,7 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   name TEXT,                                     -- Googleの表示名
   avatar_url TEXT,                               -- Googleのアイコン画像URL
-  balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,  -- 現在の所持ソル(S/)
+  points INTEGER NOT NULL DEFAULT 0,             -- 所持ポイント
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -66,7 +69,7 @@ CREATE TABLE postbacks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   transaction_id TEXT UNIQUE NOT NULL,           -- Monlixの一意の取引ID（二重付与を防止）
   user_id INTEGER NOT NULL REFERENCES users(id),
-  reward_amount DECIMAL(10, 2) NOT NULL,         -- 付与されたソル(S/)
+  reward_points INTEGER NOT NULL,                -- 獲得ポイント数
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -74,7 +77,8 @@ CREATE TABLE withdrawals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id INTEGER NOT NULL REFERENCES users(id),
   yape_phone VARCHAR(9) NOT NULL,                -- ペルーの電話番号（9桁）
-  amount DECIMAL(10, 2) NOT NULL,                -- 申請金額(S/)
+  points INTEGER NOT NULL,                       -- 消費ポイント数
+  amount_soles DECIMAL(10, 2) NOT NULL,          -- Yapeで送金する額(S/)
   status TEXT NOT NULL DEFAULT 'pending' CHECK (
     status IN ('pending', 'completed', 'rejected')
   ),
@@ -98,19 +102,19 @@ FastAPI (Heroku)
   ↓ transaction_id 重複チェック
 postbacks に保存
   ↓
-users.balance を加算
+users.points を加算
   ↓
-Home / Wallet に残高反映（フロントはAPIから取得）
+Home / Wallet にポイント反映（フロントはAPIから取得）
 ```
 
 ## 換金申請の運用フロー
 
 1. ユーザーがWalletからYape番号・金額を入力して申請
-2. FastAPIが**残高チェックと差し引きを1トランザクションで行い**、`withdrawals` に `pending` として保存（残高は申請時に差し引く。二重申請防止のため `pending` は同時に1件まで）
+2. FastAPIが**ポイントチェックと差し引きを1トランザクションで行い**、`withdrawals` に `pending` として保存（ポイントは申請時に差し引く。二重申請防止のため `pending` は同時に1件まで）
 3. 管理者が **DBクライアント（TablePlus / pgAdmin等）** でHeroku Postgresに接続し `pending` を確認
 4. Yapeで手動送金
 5. `status` を `completed` に更新 → Wallet側の履歴表示が「送金完了」に変わる
-6. 却下する場合は `rejected` に更新し、差し引いた金額を `users.balance` に手動SQLで戻す（詳細は [05-api-design.md](./05-api-design.md)）
+6. 却下する場合は `rejected` に更新し、差し引いたポイントを `users.points` に手動SQLで戻す（詳細は [05-api-design.md](./05-api-design.md)）
 
 ## MVPで不要と判断されたもの
 

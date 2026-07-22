@@ -73,7 +73,8 @@ services:
     env_file: .env               # SECRET_KEY / GOOGLE_CLIENT_ID などを渡す
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/cashyape
-      MIN_WITHDRAWAL_AMOUNT: "10.00"
+      POINTS_PER_SOL: "1000"
+      MIN_WITHDRAWAL_POINTS: "10000"
       ACCESS_TOKEN_EXPIRE_MINUTES: "10080"
     depends_on:
       db:

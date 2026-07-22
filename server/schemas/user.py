@@ -1,4 +1,3 @@
-from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel
@@ -9,5 +8,6 @@ class MeResponse(BaseModel):
     email: str
     name: Optional[str]
     avatar_url: Optional[str]
-    balance: Decimal
-    min_withdrawal_amount: Decimal
+    points: int
+    min_withdrawal_points: int
+    points_per_sol: int

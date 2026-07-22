@@ -18,14 +18,16 @@ export interface Me {
   email: string;
   name: string | null;
   avatar_url: string | null;
-  balance: number;
-  min_withdrawal_amount: number;
+  points: number;
+  min_withdrawal_points: number;
+  points_per_sol: number;
 }
 
 export interface Withdrawal {
   id: string;
   yape_phone: string;
-  amount: number;
+  points: number;
+  amount_soles: number;
   status: "pending" | "completed" | "rejected";
   created_at: string;
 }
@@ -52,18 +54,13 @@ async function apiFetch<T>(
   return res.json();
 }
 
-// APIは金額をDecimal由来の文字列（"11.00"）で返すため、数値に正規化する
+// ソル額はDecimal由来の文字列（"10.00"）で届くため数値に正規化する（ポイントは整数のまま）
 function normalizeWithdrawal(w: Withdrawal): Withdrawal {
-  return { ...w, amount: Number(w.amount) };
+  return { ...w, amount_soles: Number(w.amount_soles) };
 }
 
-export async function getMe(token: string): Promise<Me> {
-  const me = await apiFetch<Me>("/api/v1/me", token);
-  return {
-    ...me,
-    balance: Number(me.balance),
-    min_withdrawal_amount: Number(me.min_withdrawal_amount),
-  };
+export function getMe(token: string): Promise<Me> {
+  return apiFetch<Me>("/api/v1/me", token);
 }
 
 export async function getWithdrawals(
@@ -79,11 +76,11 @@ export async function getWithdrawals(
 export async function createWithdrawal(
   token: string,
   yapePhone: string,
-  amount: number
+  points: number
 ): Promise<Withdrawal> {
   const w = await apiFetch<Withdrawal>("/api/v1/withdrawals", token, {
     method: "POST",
-    body: JSON.stringify({ yape_phone: yapePhone, amount }),
+    body: JSON.stringify({ yape_phone: yapePhone, points }),
   });
   return normalizeWithdrawal(w);
 }
