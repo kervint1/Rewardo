@@ -1,0 +1,20 @@
+from fastapi import APIRouter, Depends
+
+import config
+from dependencies import get_current_user
+from models import User
+from schemas.user import MeResponse
+
+router = APIRouter(prefix="/api/v1", tags=["me"])
+
+
+@router.get("/me", response_model=MeResponse)
+def get_me(user: User = Depends(get_current_user)):
+    return MeResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        avatar_url=user.avatar_url,
+        balance=user.balance,
+        min_withdrawal_amount=config.MIN_WITHDRAWAL_AMOUNT,
+    )
