@@ -52,21 +52,38 @@ async function apiFetch<T>(
   return res.json();
 }
 
-export function getMe(token: string): Promise<Me> {
-  return apiFetch<Me>("/api/v1/me", token);
+// APIは金額をDecimal由来の文字列（"11.00"）で返すため、数値に正規化する
+function normalizeWithdrawal(w: Withdrawal): Withdrawal {
+  return { ...w, amount: Number(w.amount) };
 }
 
-export function getWithdrawals(token: string): Promise<{ withdrawals: Withdrawal[] }> {
-  return apiFetch<{ withdrawals: Withdrawal[] }>("/api/v1/withdrawals", token);
+export async function getMe(token: string): Promise<Me> {
+  const me = await apiFetch<Me>("/api/v1/me", token);
+  return {
+    ...me,
+    balance: Number(me.balance),
+    min_withdrawal_amount: Number(me.min_withdrawal_amount),
+  };
 }
 
-export function createWithdrawal(
+export async function getWithdrawals(
+  token: string
+): Promise<{ withdrawals: Withdrawal[] }> {
+  const res = await apiFetch<{ withdrawals: Withdrawal[] }>(
+    "/api/v1/withdrawals",
+    token
+  );
+  return { withdrawals: res.withdrawals.map(normalizeWithdrawal) };
+}
+
+export async function createWithdrawal(
   token: string,
   yapePhone: string,
   amount: number
 ): Promise<Withdrawal> {
-  return apiFetch<Withdrawal>("/api/v1/withdrawals", token, {
+  const w = await apiFetch<Withdrawal>("/api/v1/withdrawals", token, {
     method: "POST",
     body: JSON.stringify({ yape_phone: yapePhone, amount }),
   });
+  return normalizeWithdrawal(w);
 }
