@@ -14,5 +14,6 @@ Notionのタスク管理DBにある各要件定義タスク（要件定義MVP／
 - [04-decisions.md](./04-decisions.md) — 決定事項ログ（旧ドキュメント間の矛盾解消の記録）
 - [05-api-design.md](./05-api-design.md) — API設計（エンドポイント・認証・Postback検証・換金フロー）
 - [06-dev-environment.md](./06-dev-environment.md) — 開発環境（Docker Compose構成・開発フロー）
+- [07-deployment.md](./07-deployment.md) — デプロイ手順（Heroku・Vercel・本番接続設定）
 
 Notion側の原本: [【MVP要件定義】ペルー版モッピー](https://app.notion.com/p/3a566753a44a814bbbadf3fd8848db5c)
