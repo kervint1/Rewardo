@@ -4,10 +4,10 @@ from fastapi.responses import JSONResponse
 
 import config
 from errors import ApiError
-from routers import auth, me, postback, withdrawals
+from routers import auth, me, postback, postbacks, withdrawals
 
 # テーブル作成・変更はAlembicマイグレーションで行う（alembic upgrade head）
-app = FastAPI(title="CashYape API")
+app = FastAPI(title="Rewardo API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,4 +34,5 @@ def health():
 app.include_router(auth.router)
 app.include_router(me.router)
 app.include_router(withdrawals.router)
+app.include_router(postbacks.router)
 app.include_router(postback.router)

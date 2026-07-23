@@ -25,7 +25,7 @@ services:
       - ./server:/app
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/cashyape
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/rewardo
       POINTS_PER_SOL: "1000"
       MIN_WITHDRAWAL_POINTS: "10000"
       ACCESS_TOKEN_EXPIRE_MINUTES: "10080"
@@ -40,7 +40,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cashyape
+      POSTGRES_DB: rewardo
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

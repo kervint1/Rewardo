@@ -37,17 +37,39 @@
 | タスク実行 | タスク詳細確認・外部サイト誘導・条件達成はMonlix iframe内で完結する |
 | 報酬反映 | iframe内でタスク完了後、Webhook経由でポイントを更新する |
 
-### ③ ウォレット・換金画面（Wallet）`/wallet`
+### ③ ウォレット（Wallet）`/wallet`
 
-ボトムナビの「財布アイコン」から遷移。貯めた報酬をYapeで受け取るための換金申請画面。
+ヘッダー右端の**ポイントピル**から遷移。ポイント残高と交換履歴を見る画面。
 
 | 項目 | 内容 |
 | --- | --- |
-| 目的 | 所持ポイントの確認と換金申請 |
-| 表示要素 | 現在の所持ポイントと換算レート（1,000 pts = S/ 1） |
-| 入力項目 | Yape受取用電話番号（9桁・`9`始まり） |
-| アクション | 「換金申請する」ボタン（最低換金ポイント 10,000 pts に達するまで押せない。`pending` 中の申請があるときも押せない） |
-| 履歴 | 過去の換金申請ステータス一覧（処理中 Pendiente／送金完了 Pagado） |
+| 目的 | 所持ポイントの確認と交換履歴の閲覧 |
+| 表示要素 | 現在の所持ポイント、換算レート（1,000 pts = S/ 1）、「Canjear puntos」ボタン（→ `/exchange`） |
+| 履歴 | 過去の交換申請ステータス一覧（Pendiente／Pagado／Rechazado） |
+| レイアウト | デスクトップは「左: ポイントカード／右: 履歴」の2カラム |
+
+### ④ 交換先選択（Exchange）`/exchange`
+
+ヘッダーの**Canjearボタン**またはWalletのCTAから遷移。交換先の一覧を表示するだけの画面。
+
+| 項目 | 内容 |
+| --- | --- |
+| 目的 | 交換先の選択 |
+| 交換先 | Yape（選択可能）／PayPal（アイコン表示・「Próximamente」で選択不可） |
+| アクション | 選択可能な交換先をクリックすると `/exchange/[destination]` へ遷移 |
+
+### ⑤ 交換詳細・申請（Exchange Destination）`/exchange/[destination]`
+
+交換先ごとの詳細と申請フォーム。
+
+| 項目 | 内容 |
+| --- | --- |
+| 目的 | 交換条件の提示とポイントの換金申請 |
+| 表示要素 | 交換レート（1,000 pts = S/ 1）、最低換金ポイント（10,000 pts）、**処理目安（1〜2営業日）** の3枚のカード |
+| 入力項目 | Yape受取用電話番号（9桁・`9`始まり）、交換ポイント数 |
+| プレビュー | 入力ポイントのソル換算額（Recibirás S/ X.XX） |
+| アクション | 「Solicitar canje」ボタン（最低10,000 pts未満・pending申請ありの場合は押せない）。成功後は `/wallet` へ遷移 |
+| 未対応の交換先 | `available: false`（PayPal等）や不正なIDの場合は「este destino no está disponible」を表示 |
 
 ### ④ 管理者ダッシュボード（Admin）
 
@@ -74,9 +96,11 @@
 Monlix iframe内でタスク詳細確認・外部サイト誘導・条件達成
         ↓ Webhookでポイントが増える
 ② Home `/home`
-        ↓ ボトムナビの財布アイコン
-③ Wallet `/wallet`
-        ↓ 換金申請
+        ↓ ヘッダーの「Canjear」またはWalletのCTA
+④ Exchange `/exchange`
+        ↓ 交換先（Yape）を選ぶ
+⑤ Exchange Destination `/exchange/yape`
+        ↓ 条件確認・換金申請 → /wallet へ遷移
 管理者がDBクライアント（TablePlus等）で確認
         ↓ Yape Empresaで手動送金し、ステータスを更新
 ③ Wallet `/wallet` の履歴が「送金完了」に更新
@@ -89,7 +113,9 @@ Monlix iframe内でタスク詳細確認・外部サイト誘導・条件達成
 | ⓪ | Landing | `/` | 高 | 未ログインユーザー向けLP |
 | ① | Auth | `/login` | 高 | ログイン・登録 |
 | ② | Home | `/home` | 最高 | 報酬確認・Monlix iframe表示 |
-| ③ | Wallet | `/wallet` | 高 | ポイント確認・換金申請 |
+| ③ | Wallet | `/wallet` | 高 | ポイント確認・交換履歴 |
+| ④ | Exchange | `/exchange` | 高 | 交換先の選択 |
+| ⑤ | Exchange Destination | `/exchange/[destination]` | 高 | 交換条件の提示・換金申請 |
 
 管理者向け機能（換金申請の確認・処理）は自作のAdmin画面ではなく、DBクライアントでHeroku Postgresに直接接続して代替する。
 
@@ -98,18 +124,21 @@ Monlix iframe内でタスク詳細確認・外部サイト誘導・条件達成
 - 未ログイン時の入口は `/` に集約し、画面タップで `/login` へ誘導する
 - 認証画面はNextAuth.js（Google Provider）を使い、自作しない
 - ユーザー向け画面は白背景＋黄色アクセントで統一する
+- Webアプリなのでナビゲーションは**ヘッダー**（ロゴ＋Tareasリンク＋Canjearボタン＋所持ポイントピル）。モバイルアプリ風のボトムナビは使わない
+- モバイル1カラム〜デスクトップ複数カラムのレスポンシブレイアウト（コンテンツ幅 max-w-5xl）
 - タスク一覧・詳細確認・外部誘導はMonlix iframe内に任せる
 - Home画面では所持ポイント・プログレスバー・Monlix iframe表示に集中する
 - 最初は換金処理を完全自動化せず、管理者が手動でYape送金する
 - 管理業務はデザインよりも運用効率を優先する（DBクライアントを使う）
 - ユーザー体験の中心は「Monlixでタスク完了 → Webhookでポイント反映 → 換金申請」
 
-## UI/UXワイヤーフレーム方針
+## UI/UXデザイン
 
-MVPなのでFigmaで綺麗なデザインを作る必要はなく、紙とペン・Excalidrawなどの手書き風ツールで十分とされている。デザインはTailwind CSSなどのUIライブラリをそのまま当てて最速で組む方針。
+デザインの正は **Figma Make「MVP画面設計」**（https://www.figma.com/make/jZqyJ7wMrsMRDhO289kRHj/MVP%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88 ）。実装はこのデザインを **shadcn/ui + Tailwind CSS** で再現する（shadcnコンポーネントは `web/components/ui/` にソースとして配置）。
 
-最小構成としては以下の3画面でMVPが成立するとされていた（後に⓪〜③の4画面構成に整理）。
+Figmaとの意図的な差分:
 
-- 案件一覧（Home）
-- 案件詳細（条件確認）
-- マイページ（残高確認・Yape送金履歴）
+- 通貨表示はS/ではなく**ポイント**（規約対応後のFigma未更新分）
+- タスク一覧・タスク詳細ページはFigmaにあるが実装せず、**Monlix iframe**で代替
+- Admin画面はFigmaにあるが実装せず、DBクライアントで代替
+- ログインはGoogleのみ（Figmaのメール/パスワード欄は実装しない）

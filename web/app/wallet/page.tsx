@@ -1,152 +1,148 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeftRight } from "lucide-react";
 
-import { BottomNav } from "@/components/BottomNav";
+import { Header } from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMe } from "@/hooks/useMe";
 import {
-  ApiError,
-  createWithdrawal,
+  getPostbacks,
   getWithdrawals,
+  type Postback,
   type Withdrawal,
 } from "@/lib/api";
 
-const STATUS_LABEL: Record<Withdrawal["status"], string> = {
-  pending: "Pendiente",
-  completed: "Pagado",
-  rejected: "Rechazado",
-};
-
-const STATUS_STYLE: Record<Withdrawal["status"], string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  completed: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-700",
-};
+function StatusBadge({ status }: { status: Withdrawal["status"] }) {
+  if (status === "completed") {
+    return <Badge className="bg-green-100 text-green-700">Pagado</Badge>;
+  }
+  if (status === "rejected") {
+    return <Badge className="bg-red-100 text-red-700">Rechazado</Badge>;
+  }
+  return <Badge className="bg-amber-100 text-amber-700">Pendiente</Badge>;
+}
 
 export default function WalletPage() {
-  const { me, token, refresh } = useMe();
-  const [phone, setPhone] = useState("");
-  const [pointsInput, setPointsInput] = useState("");
-  const [history, setHistory] = useState<Withdrawal[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const loadHistory = (t: string) =>
-    getWithdrawals(t).then((r) => setHistory(r.withdrawals)).catch(console.error);
+  const { me, token } = useMe();
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [postbacks, setPostbacks] = useState<Postback[]>([]);
 
   useEffect(() => {
-    if (token) loadHistory(token);
+    if (!token) return;
+    getWithdrawals(token).then((r) => setWithdrawals(r.withdrawals)).catch(console.error);
+    getPostbacks(token).then((r) => setPostbacks(r.postbacks)).catch(console.error);
   }, [token]);
 
   const points = me?.points ?? 0;
   const minPoints = me?.min_withdrawal_points ?? 10000;
   const rate = me?.points_per_sol ?? 1000;
-  const inputPoints = Number(pointsInput) || 0;
-  const solesPreview = inputPoints > 0 ? inputPoints / rate : 0;
-  const canSubmit =
-    !!token && !submitting && points >= minPoints && phone.length === 9 && inputPoints > 0;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!token) return;
-    setError(null);
-    setSubmitting(true);
-    try {
-      await createWithdrawal(token, phone, inputPoints);
-      setPhone("");
-      setPointsInput("");
-      await Promise.all([refresh(), loadHistory(token)]);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error inesperado");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const pendingWithdrawal = withdrawals.find((w) => w.status === "pending");
 
   return (
-    <div className="min-h-screen pb-16">
-      <main className="mx-auto max-w-md px-4 py-6 flex flex-col gap-8">
-        <section className="rounded-xl bg-brand/20 p-6 text-center">
-          <p className="text-sm text-gray-600">Tus puntos</p>
-          <p className="text-4xl font-extrabold">
-            {points.toLocaleString("es-PE")} pts
-          </p>
-          <p className="mt-1 text-sm text-gray-600">
-            {rate.toLocaleString("es-PE")} pts = S/ 1.00
-          </p>
-        </section>
+    <div className="min-h-screen w-full bg-neutral-50">
+      <Header points={points} />
 
-        <section>
-          <h2 className="mb-3 font-bold">Canjear por Yape</h2>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <input
-              type="tel"
-              inputMode="numeric"
-              pattern="9[0-9]{8}"
-              maxLength={9}
-              placeholder="Número de Yape (9 dígitos)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-              className="rounded-xl border border-gray-300 px-4 py-3"
-            />
-            <input
-              type="number"
-              step={rate}
-              min={0}
-              placeholder={`Puntos (mínimo ${minPoints.toLocaleString("es-PE")})`}
-              value={pointsInput}
-              onChange={(e) => setPointsInput(e.target.value.replace(/\D/g, ""))}
-              className="rounded-xl border border-gray-300 px-4 py-3"
-            />
-            {inputPoints > 0 && (
-              <p className="text-sm text-gray-600">
-                Recibirás <span className="font-bold">S/ {solesPreview.toFixed(2)}</span> en tu Yape
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          {/* Left: points card */}
+          <div className="lg:col-span-2">
+            <div className="rounded-3xl bg-yellow-400 p-6 sm:p-8">
+              <p className="text-sm text-neutral-800">Tus puntos</p>
+              <div className="mt-1" style={{ fontSize: "2.25rem", lineHeight: 1 }}>
+                {points.toLocaleString("es-PE")} pts
+              </div>
+              <p className="mt-2 text-xs text-neutral-700">
+                {rate.toLocaleString("es-PE")} pts = S/ 1.00 · Mínimo para canjear:{" "}
+                {minPoints.toLocaleString("es-PE")} pts
               </p>
-            )}
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="rounded-xl bg-brand py-3 font-bold transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
-            >
-              {submitting ? "Enviando..." : "Canjear puntos"}
-            </button>
-          </form>
-        </section>
 
-        <section>
-          <h2 className="mb-3 font-bold">Historial</h2>
-          {history.length === 0 ? (
-            <p className="text-sm text-gray-400">Aún no tienes canjes.</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {history.map((w) => (
-                <li
-                  key={w.id}
-                  className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3"
+              {pendingWithdrawal ? (
+                <p className="mt-5 rounded-xl bg-white/50 px-4 py-3 text-center text-sm text-neutral-800">
+                  Ya tienes una solicitud de canje en proceso
+                </p>
+              ) : (
+                <Button
+                  asChild
+                  className="mt-5 h-12 w-full bg-neutral-900 text-white hover:bg-neutral-800"
                 >
-                  <div>
-                    <p className="font-bold">
-                      {w.points.toLocaleString("es-PE")} pts → S/ {w.amount_soles.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {w.yape_phone} ·{" "}
-                      {new Date(w.created_at).toLocaleDateString("es-PE")}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLE[w.status]}`}
-                  >
-                    {STATUS_LABEL[w.status]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </main>
+                  <Link href="/exchange">
+                    <ArrowLeftRight className="mr-1 h-4 w-4" />
+                    Canjear puntos
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
 
-      <BottomNav />
+          {/* Right: earned / exchanged tabs */}
+          <div className="lg:col-span-3">
+            <Tabs defaultValue="earned">
+              <TabsList>
+                <TabsTrigger value="earned">Ganados</TabsTrigger>
+                <TabsTrigger value="exchanged">Canjes</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="earned">
+                <div className="mt-4 flex flex-col gap-3">
+                  {postbacks.length === 0 && (
+                    <p className="text-sm text-neutral-400">
+                      Aún no has ganado puntos completando tareas.
+                    </p>
+                  )}
+                  {postbacks.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="text-neutral-900">
+                        +{p.reward_points.toLocaleString("es-PE")} pts
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-neutral-400">
+                          {new Date(p.created_at).toLocaleDateString("es-PE")}
+                        </span>
+                        <Badge className="bg-green-100 text-green-700">Recibido</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="exchanged">
+                <div className="mt-4 flex flex-col gap-3">
+                  {withdrawals.length === 0 && (
+                    <p className="text-sm text-neutral-400">
+                      Aún no tienes solicitudes de canje.
+                    </p>
+                  )}
+                  {withdrawals.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+                    >
+                      <div>
+                        <div className="text-neutral-900">
+                          {w.points.toLocaleString("es-PE")} pts → S/{" "}
+                          {w.amount_soles.toFixed(2)}
+                        </div>
+                        <div className="text-xs text-neutral-400">
+                          {new Date(w.created_at).toLocaleDateString("es-PE")} ·{" "}
+                          {w.yape_phone}
+                        </div>
+                      </div>
+                      <StatusBadge status={w.status} />
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

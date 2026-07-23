@@ -32,6 +32,12 @@ export interface Withdrawal {
   created_at: string;
 }
 
+export interface Postback {
+  id: string;
+  reward_points: number;
+  created_at: string;
+}
+
 async function apiFetch<T>(
   path: string,
   token: string,
@@ -71,6 +77,12 @@ export async function getWithdrawals(
     token
   );
   return { withdrawals: res.withdrawals.map(normalizeWithdrawal) };
+}
+
+export function getPostbacks(
+  token: string
+): Promise<{ postbacks: Postback[] }> {
+  return apiFetch<{ postbacks: Postback[] }>("/api/v1/postbacks", token);
 }
 
 export async function createWithdrawal(

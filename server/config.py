@@ -1,7 +1,7 @@
 import os
 
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/cashyape"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/rewardo"
 )
 # Heroku は postgres:// 形式で渡してくるが SQLAlchemy は postgresql:// を要求する
 if DATABASE_URL.startswith("postgres://"):
