@@ -7,8 +7,8 @@
 | 残高の持ち方 | `users.balance`（DECIMAL, S/) → `users.points`（INT）に変更 |
 | 報酬履歴 | `postbacks.reward_amount` → `reward_points`（INT、Monlixの仮想通貨単位） |
 | 換金申請 | `withdrawals` は消費ポイント（`points`）とYape送金額（`amount_soles`）の両方を記録 |
-| 換金レート | アプリ側で設定: `POINTS_PER_SOL=1000`（1,000 pts = S/ 1）。1,000 pts単位でのみ換金可 |
-| 最低換金 | `MIN_WITHDRAWAL_POINTS=10000`（= S/ 10） |
+| 換金レート | アプリ側で設定: `POINTS_PER_SOL=100`（100 pts = S/ 1）。100 pts単位でのみ換金可 |
+| 最低換金 | `MIN_WITHDRAWAL_POINTS=500`（= S/ 5） |
 | Monlix側設定 | ダッシュボードのVirtual Currency設定でCurrency Name（例: Coins）とExchange Rate（例: 1 USD = 1,000 Coins）を設定し、iframe内をポイント表示にする |
 
 ### 理由

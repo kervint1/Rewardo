@@ -16,7 +16,7 @@ export default function HomePage() {
   const { me } = useMe();
 
   const points = me?.points ?? 0;
-  const minPoints = me?.min_withdrawal_points ?? 10000;
+  const minPoints = me?.min_withdrawal_points ?? 500;
   const remaining = Math.max(minPoints - points, 0);
   const progress = Math.min((points / minPoints) * 100, 100);
 

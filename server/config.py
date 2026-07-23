@@ -16,7 +16,7 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 MONLIX_POSTBACK_SECRET = os.getenv("MONLIX_POSTBACK_SECRET", "")
 
 # ポイント制: 現金額を直接持たず整数ポイントで管理する（規約対応）
-POINTS_PER_SOL = int(os.getenv("POINTS_PER_SOL", "1000"))          # 1,000 pts = S/ 1
-MIN_WITHDRAWAL_POINTS = int(os.getenv("MIN_WITHDRAWAL_POINTS", "10000"))  # = S/ 10
+POINTS_PER_SOL = int(os.getenv("POINTS_PER_SOL", "100"))          # 100 pts = S/ 1（1pt = 1céntimo）
+MIN_WITHDRAWAL_POINTS = int(os.getenv("MIN_WITHDRAWAL_POINTS", "500"))  # = S/ 5
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")

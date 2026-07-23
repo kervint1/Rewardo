@@ -26,8 +26,8 @@ export default function ExchangeDestinationPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const points = me?.points ?? 0;
-  const minPoints = me?.min_withdrawal_points ?? 10000;
-  const rate = me?.points_per_sol ?? 1000;
+  const minPoints = me?.min_withdrawal_points ?? 500;
+  const rate = me?.points_per_sol ?? 100;
   const inputPoints = Number(pointsInput) || 0;
   const solesPreview = inputPoints > 0 ? inputPoints / rate : 0;
   const phoneValid = /^\d{9}$/.test(phone);

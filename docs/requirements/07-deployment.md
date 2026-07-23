@@ -26,8 +26,8 @@ heroku config:set -a rewardo-api \
   SECRET_KEY=$(openssl rand -hex 32) \
   ACCESS_TOKEN_EXPIRE_MINUTES=10080 \
   GOOGLE_CLIENT_ID=<GoogleのクライアントID> \
-  POINTS_PER_SOL=1000 \
-  MIN_WITHDRAWAL_POINTS=10000 \
+  POINTS_PER_SOL=100 \
+  MIN_WITHDRAWAL_POINTS=500 \
   FRONTEND_ORIGIN=https://<vercelのドメイン>
 # MONLIX_POSTBACK_SECRET はMonlix契約後に設定
 
